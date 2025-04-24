@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pink Birthday Surprise</title>
+  <style>
+    body {
+      background: pink;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Comic Sans MS', cursive;
+    }
+    .hidden { display: none !important; }
+    #countdown {
+      font-size: 48px;
+      color: #fff;
+      text-shadow: 2px 2px 4px #000;
+      margin-top: 20px;
+    }
+    #message {
+      font-size: 36px;
+      color: #fff;
+      text-shadow: 2px 2px 4px #000;
+      text-align: center;
+      max-width: 80%;
+      white-space: pre-wrap;
+      animation: fadeIn 2s;
+      margin: 20px 0;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(.8); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .image-container {
+      width: 500px;
+      height: 350px;
+      border: 4px solid #fff;
+      border-radius: 12px;
+      box-shadow: 2px 2px 6px rgba(0,0,0,.3);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .image-container img {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      opacity: 0;
+      transition: opacity .5s;
+    }
+    .image-container img.visible {
+      opacity: 1;
+      position: relative;
+    }
+    .image-container.cute-text {
+      flex-direction: column;
+      padding: 20px;
+    }
+    .image-container.cute-text p {
+      color: #fff;
+      margin: 5px 0;
+      font-size: 24px;
+      text-shadow: 1px 1px 3px #000;
+    }
+    #surprise-btn, #bye-btn {
+      padding: 10px 20px;
+      font-size: 18px;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      background: #ffeb3b;
+      margin-top: 10px;
+      box-shadow: 1px 1px 4px rgba(0,0,0,.2);
+    }
+    #bye-btn {
+      background: #ff6f61;
+      color: #fff;
+    }
+    .control-btn {
+      position: absolute;
+      top: 10px;
+      padding: 8px 12px;
+      background: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 1px 1px 4px rgba(0,0,0,.2);
+    }
+    #play-btn { right: 90px; }
+    #stop-btn { right: 10px; }
+    #love-you {
+      font-size: 60px;
+      color: #ff0066;
+      text-shadow: 2px 2px 4px #000;
+      animation: pulse 1s infinite alternate;
+      margin-top: 40px;
+    }
+    @keyframes pulse {
+      from { transform: scale(1); }
+      to { transform: scale(1.2); }
+    }
+  </style>
+</head>
+<body>
+  <audio id="audio" loop>
+    <source src="happy-birthday-314197.mp3" type="audio/mpeg">
+  </audio>
+  <button id="play-btn" class="control-btn hidden">Play</button>
+  <button id="stop-btn" class="control-btn hidden">Stop</button>
+
+  <div id="form-container">
+    <input id="username" placeholder="Enter name" />
+    <button id="submit-btn">Submit</button>
+  </div>
+
+  <div id="countdown" class="hidden"></div>
+  <div id="message" class="hidden"></div>
+  <button id="surprise-btn" class="hidden">Surprise!</button>
+  <div id="image-container" class="hidden image-container"></div>
+  <button id="bye-btn" class="hidden">Byyyy!</button>
+  <div id="love-you" class="hidden">I Love You</div>
+
+  <script>
+    const formContainer  = document.getElementById('form-container'),
+          submitBtn      = document.getElementById('submit-btn'),
+          usernameInput  = document.getElementById('username'),
+          countdownEl    = document.getElementById('countdown'),
+          messageEl      = document.getElementById('message'),
+          surpriseBtn    = document.getElementById('surprise-btn'),
+          byeBtn         = document.getElementById('bye-btn'),
+          loveYou        = document.getElementById('love-you'),
+          playBtn        = document.getElementById('play-btn'),
+          stopBtn        = document.getElementById('stop-btn'),
+          audioEl        = document.getElementById('audio'),
+          imageContainer = document.getElementById('image-container');
+
+    const imageSrcs = Array.from({length:10},(_,i)=>`Image${i+1}.jpg`);
+    let slideInterval, collageInterval, clickCount = 0;
+
+    // Build slideshow + final image
+    imageSrcs.forEach(src=>{
+      const img = document.createElement('img');
+      img.src = src;
+      imageContainer.appendChild(img);
+    });
+    const finalImg = document.createElement('img');
+    finalImg.src = 'we-re-both-getting-old-but-who-s-counting-happy-birthday-1651269964-6776ff78ac18e.jpg';
+    imageContainer.appendChild(finalImg);
+
+    const imgs = Array.from(imageContainer.querySelectorAll('img'));
+
+    function clearDisplays(){
+      clearInterval(slideInterval);
+      clearInterval(collageInterval);
+      imageContainer.className = 'image-container';
+      imgs.forEach(i=>i.classList.remove('visible'));
+      // remove any injected paragraphs
+      Array.from(imageContainer.querySelectorAll('p')).forEach(p=>p.remove());
+    }
+
+    function startSlideshow(){
+      clearDisplays();
+      imageContainer.classList.remove('hidden');
+      let idx = 0;
+      imgs[idx].classList.add('visible');
+      slideInterval = setInterval(()=>{
+        imgs[idx].classList.remove('visible');
+        idx = (idx + 1) % (imgs.length - 1);
+        imgs[idx].classList.add('visible');
+      },4000);
+    }
+
+    function showMsg(stage, name){
+      const msgs = [
+        `🎉 Happy Birthday, ${name}! 🎉\nWishing you a day filled with joy and love.`,
+        `Hope your day keeps getting better, ${name}!\nI love you forever, bubyaa 💖`
+      ];
+      messageEl.textContent = msgs[stage];
+    }
+
+    function showCollage(){
+      clearDisplays();
+      imageContainer.classList.remove('hidden');
+      let idx=0;
+      function pair(){
+        clearDisplays();
+        imgs[idx].classList.add('visible');
+        imgs[(idx+1)%(imgs.length-1)].classList.add('visible');
+      }
+      pair();
+      collageInterval = setInterval(()=>{
+        idx = (idx + 2) % (imgs.length - 1);
+        pair();
+      },2000);
+    }
+
+    function showCuteNames(){
+      clearDisplays();
+      imageContainer.classList.add('cute-text');
+      ['Cutie Pie','Love Bug','Snuggle Bunny','Sugar Plum','Cuddle Monster','Sweet Pea','Darling','Honey Bunny']
+        .forEach(name=>{
+          const p=document.createElement('p');
+          p.textContent = name;
+          imageContainer.appendChild(p);
+        });
+      imageContainer.classList.remove('hidden');
+    }
+
+    submitBtn.addEventListener('click', ()=>{
+      const name = usernameInput.value.trim();
+      if (!name) return;
+      formContainer.classList.add('hidden');
+      countdownEl.classList.remove('hidden');
+      let c = 3; countdownEl.textContent = c;
+      const iv = setInterval(()=>{
+        c--;
+        if(c>0) countdownEl.textContent = c;
+        else {
+          clearInterval(iv);
+          countdownEl.classList.add('hidden');
+          messageEl.classList.remove('hidden');
+          surpriseBtn.classList.remove('hidden');
+          playBtn.classList.remove('hidden');
+          stopBtn.classList.remove('hidden');
+          showMsg(0,name);
+          audioEl.currentTime=0; audioEl.play();
+        }
+      },1000);
+    });
+
+    surpriseBtn.addEventListener('click', ()=>{
+      clickCount++;
+      const name = usernameInput.value.trim();
+      if(clickCount===1) showMsg(1,name);
+      else if(clickCount===2){
+        startSlideshow();
+        surpriseBtn.textContent='Enjoy the Show!';
+      } else if(clickCount===3){
+        showCuteNames();
+        surpriseBtn.textContent='Enjoy More!';
+      } else if(clickCount===4){
+        clearDisplays();
+        imageContainer.classList.remove('hidden');
+        finalImg.classList.add('visible');
+        surpriseBtn.disabled=true;
+        byeBtn.classList.remove('hidden');
+        audioEl.pause();
+        messageEl.textContent=`Byyyy, ${name}! 🎉`;
+      }
+    });
+
+    byeBtn.addEventListener('click', ()=>{
+      audioEl.pause();
+      clearDisplays();
+      imageContainer.classList.add('hidden');
+      messageEl.classList.add('hidden');
+      surpriseBtn.classList.add('hidden');
+      playBtn.classList.add('hidden');
+      stopBtn.classList.add('hidden');
+      byeBtn.classList.add('hidden');
+      loveYou.classList.remove('hidden');
+    });
+
+    playBtn.addEventListener('click', ()=>{
+      audioEl.play(); playBtn.classList.add('hidden'); stopBtn.classList.remove('hidden');
+    });
+    stopBtn.addEventListener('click', ()=>{
+      audioEl.pause(); playBtn.classList.remove('hidden'); stopBtn.classList.add('hidden');
+    });
+  </script>
+</body>
+</html>
